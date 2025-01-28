@@ -25,8 +25,8 @@ class Player(CircleShape):
         self.position += forward * PLAYER_SPEED * dt
 
     def draw(self, screen):
-        pygame.draw.polygon(screen, "cyan", self.triangle(), 0)
-
+        pygame.draw.polygon(screen, (230, 230, 230), self.triangle())
+        pygame.draw.polygon(screen, (0, 0, 0), self.triangle(), 2)
     def update(self, dt):
         keys = pygame.key.get_pressed()
         if keys[pygame.K_LEFT] or keys[pygame.K_a]:

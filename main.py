@@ -5,6 +5,7 @@ from player import *
 from asteroid import *
 from asteroidfield import AsteroidField
 from shot import Shot
+from text_utils import *
 
 def load_high_score():
     try:
@@ -23,7 +24,10 @@ def main():
     pygame.init()
     background = pygame.image.load("asteroids.jpg")
     pygame.mixer.init(44100, -16, 2, 2048)
-    pygame.mixer.music.load("Battle in the Stars.ogg")
+    try:
+        pygame.mixer.music.load("Battle in the Stars.ogg")
+    except pygame.error:
+        print("Could not load background music")
     pygame.mixer.music.set_volume(0.3) #adjust volume (0.0 to 1.0)
     pygame.mixer.music.play(-1) #-1 means loop forever
     crash_sound = pygame.mixer.Sound("explosion.wav")
@@ -36,14 +40,13 @@ def main():
     screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
     dt = 0
     high_score = load_high_score()
+    original_high_score = high_score
     score = 0
     multiplier = 1
     last_hit_time = 0
     last_decay_time = 0
     font = pygame.font.Font(None, 36)
     game_over_font = pygame.font.Font(None, 74)
-    game_over_text = game_over_font.render("Game Over!", True, "red")
-    game_over_rect = game_over_text.get_rect(center=(SCREEN_WIDTH/2, SCREEN_HEIGHT/2))
 
     updatable = pygame.sprite.Group()
     drawable = pygame.sprite.Group()
@@ -51,7 +54,7 @@ def main():
     shots = pygame.sprite.Group()
     Asteroid.containers = (updatable, drawable, asteroids)
     Player.containers = (updatable, drawable)
-    AsteroidField.containers = (updatable)
+    AsteroidField.containers = (updatable,)
     Shot.containers = (updatable, drawable, shots)
     
     player = Player((SCREEN_WIDTH / 2), (SCREEN_HEIGHT / 2))
@@ -63,6 +66,9 @@ def main():
     
     while True:
         for event in pygame.event.get():
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    sys.exit()
             if event.type == pygame.QUIT:
                 return
         
@@ -76,25 +82,64 @@ def main():
         for thing in updatable:
             thing.update(dt)
         
+        screen.blit(background, (0,0))
+        for thing in drawable:
+            thing.draw(screen)
+
+        draw_outlined_text(screen, f"Score: {score} (x{multiplier:.1f})", font, (10, 10))
+        draw_outlined_text(screen, f"High Score: {high_score}", font, (10, 50))        
+     
+
         for asteroid in asteroids:
             if asteroid.collision(player):
                 print("Game over!")
                 crash_sound.play()
                 pygame.mixer.music.stop()
-                if score > high_score:
-                    new_record_text = font.render(f"New High Score: {score}!", True, "yellow")
-                
-                else:
-                    new_record_text = font.render(f"Final Score: {score}", True, "white")
-                
-                new_record_rect = new_record_text.get_rect(center=(SCREEN_WIDTH/2, SCREEN_HEIGHT/2 + 50))
-                screen.blit(new_record_text, new_record_rect)
-                screen.blit(game_over_text, game_over_rect)
+                try:
+                    pygame.mixer.music.load("Game Over II.ogg")
+                except pygame.error:
+                    print("Could not load background music")
+                pygame.mixer.music.play()
+                draw_outlined_text_centered(screen, "Game Over!", game_over_font, (SCREEN_WIDTH/2, SCREEN_HEIGHT/2), "red", "black")
+                draw_outlined_text_centered(screen, "Press Space to Close", font, (SCREEN_WIDTH/2, SCREEN_HEIGHT/2 + 100), "white", "black")
+                draw_outlined_text_centered(screen, "Press R to Retry", font, (SCREEN_WIDTH/2, SCREEN_HEIGHT/2 + 150), "white", "black")
                
+                if score > original_high_score:
+                    draw_outlined_text_centered(screen, f"New High Score: {score}!", font, (SCREEN_WIDTH/2, SCREEN_HEIGHT/2 + 50), "yellow", "black")
+                else:
+                    draw_outlined_text_centered(screen, f"Final Score: {score}", font, (SCREEN_WIDTH/2, SCREEN_HEIGHT/2 + 50), "white", "black")
+                               
                 pygame.display.flip()
-                pygame.time.wait(1500)
-                sys.exit()
-            
+                while True:
+                    for event in pygame.event.get():
+                        if event.type == pygame.QUIT:
+                            sys.exit()
+                        if event.type == pygame.KEYDOWN:
+                            if event.key == pygame.K_SPACE:
+                                sys.exit()
+                            if event.key == pygame.K_r:
+                                score = 0
+                                multiplier = 1
+                                last_hit_time = 0
+                                last_decay_time = 0
+                                updatable.empty()
+                                drawable.empty()
+                                asteroids.empty()
+                                shots.empty()
+                                player = Player((SCREEN_WIDTH / 2), (SCREEN_HEIGHT / 2))
+                                asteroidfield = AsteroidField()
+                                updatable.add(player)
+                                drawable.add(player)
+                                try:
+                                    pygame.mixer.music.load("Battle in the Stars.ogg")
+                                except pygame.error:
+                                    print("Could not load background music")
+                                pygame.mixer.music.play(-1)
+                                break
+                    else:
+                        continue
+                    break
+                continue
             for shot in shots:
                 if shot.collision(asteroid):
                     if asteroid.radius == ASTEROID_MAX_RADIUS:
@@ -117,15 +162,7 @@ def main():
             high_score = score
             save_high_score(high_score)
         
-        score_text = font.render(f"Score: {score} (x{multiplier:.1f})", True, ("white"))
-        high_score_text = font.render(f"High Score: {high_score}", True, "white")
-        screen.blit(background, (0,0))
         
-        for thing in drawable:
-            thing.draw(screen)
-                
-        screen.blit(score_text, (10, 10))
-        screen.blit(high_score_text, (10, 50))
         
         pygame.display.flip()
         dt = clock.tick(60) / 1000
