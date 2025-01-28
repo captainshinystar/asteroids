@@ -89,7 +89,6 @@ def main():
         draw_outlined_text(screen, f"Score: {score} (x{multiplier:.1f})", font, (10, 10))
         draw_outlined_text(screen, f"High Score: {high_score}", font, (10, 50))        
      
-
         for asteroid in asteroids:
             if asteroid.collision(player):
                 print("Game over!")
@@ -101,7 +100,7 @@ def main():
                     print("Could not load background music")
                 pygame.mixer.music.play()
                 draw_outlined_text_centered(screen, "Game Over!", game_over_font, (SCREEN_WIDTH/2, SCREEN_HEIGHT/2), "red", "black")
-                draw_outlined_text_centered(screen, "Press Space to Close", font, (SCREEN_WIDTH/2, SCREEN_HEIGHT/2 + 100), "white", "black")
+                draw_outlined_text_centered(screen, "Press ESC to Close", font, (SCREEN_WIDTH/2, SCREEN_HEIGHT/2 + 100), "white", "black")
                 draw_outlined_text_centered(screen, "Press R to Retry", font, (SCREEN_WIDTH/2, SCREEN_HEIGHT/2 + 150), "white", "black")
                
                 if score > original_high_score:
@@ -115,7 +114,7 @@ def main():
                         if event.type == pygame.QUIT:
                             sys.exit()
                         if event.type == pygame.KEYDOWN:
-                            if event.key == pygame.K_SPACE:
+                            if event.key == pygame.K_ESCAPE:
                                 sys.exit()
                             if event.key == pygame.K_r:
                                 score = 0
@@ -161,9 +160,7 @@ def main():
         if score > high_score:
             high_score = score
             save_high_score(high_score)
-        
-        
-        
+                        
         pygame.display.flip()
         dt = clock.tick(60) / 1000
 
